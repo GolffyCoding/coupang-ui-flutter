@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/providers/usecase_providers.dart';
 import '../../../../core/theme/cp_theme.dart';
 import '../../../../core/widgets/coupang_widgets.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/entities/review.dart';
 import '../widgets/product_widgets.dart';
-import '../../../cart/data/repositories/demo_cart_repository.dart';
-import '../../../wishlist/data/repositories/demo_wishlist_repository.dart';
 import '../../../cart/presentation/pages/cart_page.dart';
 
-class CpProductDetailPage extends StatefulWidget {
+class CpProductDetailPage extends ConsumerStatefulWidget {
   final Product product;
   const CpProductDetailPage({super.key, required this.product});
 
   @override
-  State<CpProductDetailPage> createState() => _CpProductDetailPageState();
+  ConsumerState<CpProductDetailPage> createState() =>
+      _CpProductDetailPageState();
 }
 
-class _CpProductDetailPageState extends State<CpProductDetailPage>
+class _CpProductDetailPageState extends ConsumerState<CpProductDetailPage>
     with SingleTickerProviderStateMixin {
   String? _selectedColor;
   String? _selectedOption;
   int _quantity = 1;
   late final TabController _tabController;
+  final GlobalKey _addToCartKey = GlobalKey();
+  final GlobalKey _cartIconKey = GlobalKey();
 
   @override
   void initState() {
@@ -75,15 +79,63 @@ class _CpProductDetailPageState extends State<CpProductDetailPage>
                 ),
                 onPressed: () {},
               ),
-              IconButton(
-                icon: const Icon(
-                  Icons.shopping_cart_outlined,
-                  color: CpColors.textMain,
-                ),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CpCartPage()),
-                ),
+              Builder(
+                builder: (context) {
+                  final count = ref
+                      .watch(cartChangeNotifierProvider)
+                      .totalItemCount;
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      IconButton(
+                        key: _cartIconKey,
+                        icon: const Icon(
+                          Icons.shopping_cart_outlined,
+                          color: CpColors.textMain,
+                        ),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CpCartPage(),
+                          ),
+                        ),
+                      ),
+                      if (count > 0)
+                        Positioned(
+                          right: 4,
+                          top: 4,
+                          child: IgnorePointer(
+                            child: CpBadgePop(
+                              trigger: count,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: CpColors.blue,
+                                  borderRadius: BorderRadius.circular(7),
+                                  border: Border.all(
+                                    color: CpColors.white,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  '$count',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -739,15 +791,24 @@ class _CpProductDetailPageState extends State<CpProductDetailPage>
           ],
         ),
       ),
-      bottomNavigationBar: ListenableBuilder(
-        listenable: DemoWishlistRepository.instance,
-        builder: (context, _) {
+      bottomNavigationBar: Builder(
+        builder: (context) {
+          final wishlistRepo = ref.watch(wishlistChangeNotifierProvider);
           return CpActionBar(
-            isWishlisted: DemoWishlistRepository.instance.isWishlisted(p.id),
+            addToCartKey: _addToCartKey,
+            isWishlisted: wishlistRepo.isWishlisted(p.id),
             onWishlistTap: () =>
-                DemoWishlistRepository.instance.toggle(p),
+                ref.read(addToWishlistUseCaseProvider)(p),
             onAddToCart: () {
-              DemoCartRepository.instance.addItem(p, quantity: _quantity);
+              flyToCart(
+                context: context,
+                fromKey: _addToCartKey,
+                toKey: _cartIconKey,
+                imageUrl: p.imageUrl,
+                onLanded: () {
+                  ref.read(addToCartUseCaseProvider)(p, quantity: _quantity);
+                },
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('장바구니에 담았습니다'),
@@ -756,7 +817,7 @@ class _CpProductDetailPageState extends State<CpProductDetailPage>
               );
             },
             onBuyNow: () {
-              DemoCartRepository.instance.addItem(p, quantity: _quantity);
+              ref.read(addToCartUseCaseProvider)(p, quantity: _quantity);
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CpCartPage()),

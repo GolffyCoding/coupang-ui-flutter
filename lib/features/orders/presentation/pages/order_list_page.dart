@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/cp_theme.dart';
 import '../../../../core/widgets/coupang_widgets.dart';
 import '../../../cart/presentation/widgets/cart_widgets.dart';
-import '../../data/repositories/demo_order_repository.dart';
 import '../widgets/order_widgets.dart';
 import 'order_detail_page.dart';
 
-class CpOrderListPage extends StatelessWidget {
+class CpOrderListPage extends ConsumerWidget {
   const CpOrderListPage({super.key});
 
   String _fmt(int v) => v.toString().replaceAllMapped(
@@ -15,8 +16,10 @@ class CpOrderListPage extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
-    final repo = DemoOrderRepository.instance;
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ChangeNotifier-typed provider drives reactive rebuilds when new
+    // orders are placed elsewhere in the app.
+    final repo = ref.watch(orderChangeNotifierProvider);
     return Scaffold(
       backgroundColor: CpColors.bg,
       appBar: AppBar(
@@ -32,9 +35,8 @@ class CpOrderListPage extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: CpColors.textMain),
       ),
-      body: ListenableBuilder(
-        listenable: repo,
-        builder: (context, _) {
+      body: Builder(
+        builder: (context) {
           final orders = repo.getOrders();
           if (orders.isEmpty) {
             return const CpEmptyState(

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers/usecase_providers.dart';
 import '../../../../core/theme/cp_theme.dart';
-import '../../data/repositories/demo_auth_repository.dart';
 
-class CpSignupPage extends StatefulWidget {
+class CpSignupPage extends ConsumerStatefulWidget {
   const CpSignupPage({super.key});
 
   @override
-  State<CpSignupPage> createState() => _CpSignupPageState();
+  ConsumerState<CpSignupPage> createState() => _CpSignupPageState();
 }
 
-class _CpSignupPageState extends State<CpSignupPage> {
+class _CpSignupPageState extends ConsumerState<CpSignupPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -22,7 +23,7 @@ class _CpSignupPageState extends State<CpSignupPage> {
       _error = null;
     });
     try {
-      await DemoAuthRepository.instance.signup(
+      await ref.read(signupUseCaseProvider)(
         _emailController.text.trim(),
         _passwordController.text,
         _nameController.text.trim().isEmpty

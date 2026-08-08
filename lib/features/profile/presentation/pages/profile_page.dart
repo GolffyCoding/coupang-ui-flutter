@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/providers/usecase_providers.dart';
 import '../../../../core/theme/cp_theme.dart';
-import '../../../auth/data/repositories/demo_auth_repository.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../orders/presentation/pages/order_list_page.dart';
 import '../../../wishlist/presentation/pages/wishlist_page.dart';
 
-class CpProfilePage extends StatelessWidget {
+class CpProfilePage extends ConsumerWidget {
   const CpProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final auth = DemoAuthRepository.instance;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final auth = ref.watch(authChangeNotifierProvider);
     return Scaffold(
       backgroundColor: CpColors.bg,
       appBar: AppBar(
@@ -26,9 +28,8 @@ class CpProfilePage extends StatelessWidget {
         ),
         automaticallyImplyLeading: false,
       ),
-      body: ListenableBuilder(
-        listenable: auth,
-        builder: (context, _) {
+      body: Builder(
+        builder: (context) {
           final user = auth.currentUser;
           return ListView(
             padding: const EdgeInsets.only(bottom: 24),
@@ -99,7 +100,7 @@ class CpProfilePage extends StatelessWidget {
                       )
                     else
                       GestureDetector(
-                        onTap: auth.logout,
+                        onTap: ref.read(logoutUseCaseProvider).call,
                         child: const Text(
                           '로그아웃',
                           style: TextStyle(

@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/cp_theme.dart';
+import '../../../../core/providers/usecase_providers.dart';
 import '../../domain/entities/cart_item.dart';
-import '../../data/repositories/demo_cart_repository.dart';
-import '../../../orders/data/repositories/demo_order_repository.dart';
 import '../../../orders/presentation/pages/order_detail_page.dart';
 
-class CpCheckoutPage extends StatefulWidget {
+class CpCheckoutPage extends ConsumerStatefulWidget {
   final List<CartItem> items;
   const CpCheckoutPage({super.key, required this.items});
 
   @override
-  State<CpCheckoutPage> createState() => _CpCheckoutPageState();
+  ConsumerState<CpCheckoutPage> createState() => _CpCheckoutPageState();
 }
 
-class _CpCheckoutPageState extends State<CpCheckoutPage> {
+class _CpCheckoutPageState extends ConsumerState<CpCheckoutPage> {
   final _paymentMethods = const ['쿠팡페이 (카드)', '무통장입금', '휴대폰 결제', '네이버페이'];
   int _selectedPayment = 0;
   bool _placing = false;
+  bool _placed = false;
 
   String _fmt(int v) => v.toString().replaceAllMapped(
     RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -28,15 +29,21 @@ class _CpCheckoutPageState extends State<CpCheckoutPage> {
   Future<void> _placeOrder() async {
     setState(() => _placing = true);
     await Future.delayed(const Duration(milliseconds: 600));
-    final order = DemoOrderRepository.instance.placeOrder(
+    final order = ref.read(placeOrderUseCaseProvider)(
       items: widget.items,
       totalPrice: _total,
       address: '서울특별시 송파구 로켓배송로 570 (본인)',
       paymentMethod: _paymentMethods[_selectedPayment],
     );
     for (final item in widget.items) {
-      DemoCartRepository.instance.removeItem(item.product.id);
+      ref.read(removeFromCartUseCaseProvider)(item.product.id);
     }
+    if (!mounted) return;
+    setState(() {
+      _placing = false;
+      _placed = true;
+    });
+    await Future.delayed(const Duration(milliseconds: 450));
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
@@ -133,7 +140,11 @@ class _CpCheckoutPageState extends State<CpCheckoutPage> {
             child: Column(
               children: List.generate(_paymentMethods.length, (i) {
                 final selected = i == _selectedPayment;
-                return GestureDetector(
+                return Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
                   onTap: () => setState(() => _selectedPayment = i),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
@@ -175,6 +186,7 @@ class _CpCheckoutPageState extends State<CpCheckoutPage> {
                         ),
                       ],
                     ),
+                  ),
                   ),
                 );
               }),
@@ -221,24 +233,35 @@ class _CpCheckoutPageState extends State<CpCheckoutPage> {
                   borderRadius: BorderRadius.circular(6),
                 ),
               ),
-              onPressed: _placing ? null : _placeOrder,
-              child: _placing
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
+              onPressed: (_placing || _placed) ? null : _placeOrder,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _placed
+                    ? const Icon(
+                        Icons.check_circle,
+                        key: ValueKey('placed'),
                         color: Colors.white,
-                        strokeWidth: 2.4,
+                      )
+                    : _placing
+                    ? const SizedBox(
+                        key: ValueKey('placing'),
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.4,
+                        ),
+                      )
+                    : Text(
+                        '${_fmt(_total)}원 결제하기',
+                        key: const ValueKey('idle'),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
-                    )
-                  : Text(
-                      '${_fmt(_total)}원 결제하기',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
+              ),
             ),
           ),
         ),

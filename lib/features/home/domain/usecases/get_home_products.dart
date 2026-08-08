@@ -1,6 +1,9 @@
 import '../../../product/domain/entities/product.dart';
-import '../../../product/data/repositories/demo_product_repository.dart';
+import '../../../product/domain/repositories/product_repository.dart';
 
 class GetHomeProducts {
-  List<Product> call() => DemoProductRepository.products;
+  final ProductRepository repository;
+  const GetHomeProducts(this.repository);
+
+  List<Product> call() => repository.getProductsSync();
 }

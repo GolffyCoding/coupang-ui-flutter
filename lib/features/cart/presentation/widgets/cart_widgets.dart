@@ -80,14 +80,20 @@ class CpCartItemTile extends StatelessWidget {
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: onRemove,
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(
-                    Icons.close,
-                    size: 18,
-                    color: CpColors.textMuted,
+              Material(
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: onRemove,
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.close,
+                      size: 18,
+                      color: CpColors.textMuted,
+                    ),
                   ),
                 ),
               ),

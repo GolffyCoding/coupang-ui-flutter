@@ -1,35 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers/usecase_providers.dart';
 import '../../../../core/theme/cp_theme.dart';
 import '../../../../core/widgets/coupang_widgets.dart';
-import '../../../product/data/repositories/demo_product_repository.dart';
 import '../../../product/presentation/pages/product_detail_page.dart';
-import '../controllers/search_controller.dart';
+import '../controllers/category_sort_notifier.dart';
+import '../controllers/search_controller.dart' show CpSearchController;
 
-class CpCategoryPage extends StatefulWidget {
+class CpCategoryPage extends ConsumerWidget {
   final String categoryName;
   const CpCategoryPage({super.key, required this.categoryName});
 
   @override
-  State<CpCategoryPage> createState() => _CpCategoryPageState();
-}
-
-class _CpCategoryPageState extends State<CpCategoryPage> {
-  final _searchController = CpSearchController();
-  SortOption _sort = SortOption.recommended;
-
-  @override
-  Widget build(BuildContext context) {
-    final products = _searchController.sort(
-      DemoProductRepository.products,
-      _sort,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sort = ref.watch(categorySortProvider);
+    final catalog = ref.watch(getCategoryProductsUseCaseProvider)(
+      categoryName,
     );
+    final products = CpSearchController().sort(catalog, sort);
     return Scaffold(
       backgroundColor: CpColors.bg,
       appBar: AppBar(
         backgroundColor: CpColors.white,
         elevation: 0,
         title: Text(
-          widget.categoryName,
+          categoryName,
           style: const TextStyle(
             color: CpColors.textMain,
             fontSize: 16,
@@ -47,23 +42,31 @@ class _CpCategoryPageState extends State<CpCategoryPage> {
               children: [
                 _SortTab(
                   label: '추천순',
-                  isActive: _sort == SortOption.recommended,
-                  onTap: () => setState(() => _sort = SortOption.recommended),
+                  isActive: sort == SortOption.recommended,
+                  onTap: () => ref
+                      .read(categorySortProvider.notifier)
+                      .select(SortOption.recommended),
                 ),
                 _SortTab(
                   label: '낮은가격순',
-                  isActive: _sort == SortOption.priceAsc,
-                  onTap: () => setState(() => _sort = SortOption.priceAsc),
+                  isActive: sort == SortOption.priceAsc,
+                  onTap: () => ref
+                      .read(categorySortProvider.notifier)
+                      .select(SortOption.priceAsc),
                 ),
                 _SortTab(
                   label: '높은가격순',
-                  isActive: _sort == SortOption.priceDesc,
-                  onTap: () => setState(() => _sort = SortOption.priceDesc),
+                  isActive: sort == SortOption.priceDesc,
+                  onTap: () => ref
+                      .read(categorySortProvider.notifier)
+                      .select(SortOption.priceDesc),
                 ),
                 _SortTab(
                   label: '평점순',
-                  isActive: _sort == SortOption.rating,
-                  onTap: () => setState(() => _sort = SortOption.rating),
+                  isActive: sort == SortOption.rating,
+                  onTap: () => ref
+                      .read(categorySortProvider.notifier)
+                      .select(SortOption.rating),
                 ),
               ],
             ),
@@ -79,7 +82,7 @@ class _CpCategoryPageState extends State<CpCategoryPage> {
               children: products
                   .map(
                     (p) => CpProductCard(
-                      key: ValueKey('${p.id}_${_sort.name}'),
+                      key: ValueKey('${p.id}_${sort.name}'),
                       imageUrl: p.imageUrl,
                       title: p.title,
                       price: p.price,
@@ -118,17 +121,37 @@ class _SortTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-              color: isActive ? CpColors.blue : CpColors.textSub,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 150),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                    color: isActive ? CpColors.blue : CpColors.textSub,
+                  ),
+                  child: Text(label),
+                ),
+                const SizedBox(height: 4),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  height: 2,
+                  width: isActive ? 20 : 0,
+                  decoration: BoxDecoration(
+                    color: CpColors.blue,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

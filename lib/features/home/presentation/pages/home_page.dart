@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/cp_theme.dart';
 import '../../../../core/widgets/coupang_widgets.dart';
+import '../../../../core/providers/usecase_providers.dart';
 import '../../../product/domain/entities/product.dart';
 import '../../../product/presentation/pages/product_detail_page.dart';
 import '../controllers/home_controller.dart';
-import '../../domain/usecases/get_home_products.dart';
 import '../widgets/home_widgets.dart';
 import '../../../search/presentation/pages/category_page.dart';
 import '../../../cart/presentation/pages/cart_page.dart';
 import '../../../wishlist/presentation/pages/wishlist_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 
-class CpHomePage extends StatefulWidget {
+class CpHomePage extends ConsumerStatefulWidget {
   /// When embedded inside the app-level bottom-nav shell, the page
   /// should not render its own bottom nav bar.
   final bool embedded;
@@ -30,12 +31,10 @@ class CpHomePage extends StatefulWidget {
   });
 
   @override
-  State<CpHomePage> createState() => _CpHomePageState();
+  ConsumerState<CpHomePage> createState() => _CpHomePageState();
 }
 
-class _CpHomePageState extends State<CpHomePage> {
-  final HomeController _controller = HomeController(GetHomeProducts());
-  List<Product> get _products => _controller.products;
+class _CpHomePageState extends ConsumerState<CpHomePage> {
   int _navIndex = 0;
 
 
@@ -56,6 +55,10 @@ class _CpHomePageState extends State<CpHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final HomeController controller = HomeController(
+      ref.watch(getHomeProductsUseCaseProvider),
+    );
+    final List<Product> products = controller.products;
     return Scaffold(
       backgroundColor: CpColors.bg,
       appBar: CpHeader(
@@ -225,7 +228,7 @@ class _CpHomePageState extends State<CpHomePage> {
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 12,
                       childAspectRatio: 0.58,
-                      children: _products
+                      children: products
                           .map(
                             (p) => CpProductCard(
                               imageUrl: p.imageUrl,
@@ -256,7 +259,7 @@ class _CpHomePageState extends State<CpHomePage> {
                 children: [
                   CpSectionHeader(title: '로켓프레시', subtitle: '신선한 식품을 다음날 아침에!'),
                   SizedBox(
-                    height: 240,
+                    height: 246,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -33,7 +33,7 @@ class CpProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return _PressScale(
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,6 +106,38 @@ class CpProductCard extends StatelessWidget {
           const SizedBox(height: 4),
           if (isRocket) const CpRocketBadge(small: true),
         ],
+      ),
+    );
+  }
+}
+
+/// Scales its child down slightly on press for tactile tap feedback,
+/// without adding a ripple (used where a Material ripple would look odd
+/// against arbitrary card content).
+class _PressScale extends StatefulWidget {
+  final VoidCallback? onTap;
+  final Widget child;
+  const _PressScale({this.onTap, required this.child});
+
+  @override
+  State<_PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<_PressScale> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: widget.child,
       ),
     );
   }

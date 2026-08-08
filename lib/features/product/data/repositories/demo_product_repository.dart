@@ -1,6 +1,21 @@
 import '../../domain/entities/product.dart';
+import '../../domain/repositories/product_repository.dart';
 
-class DemoProductRepository {
+class DemoProductRepository implements ProductRepository {
+  DemoProductRepository._internal();
+  static final DemoProductRepository instance =
+      DemoProductRepository._internal();
+
+  @override
+  Future<List<Product>> getProducts() async => products;
+
+  @override
+  Future<Product> getProductById(String id) async =>
+      products.firstWhere((p) => p.id == id);
+
+  @override
+  List<Product> getProductsSync() => products;
+
   static final List<Product> products = [
     Product(
       id: '1',

@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers/usecase_providers.dart';
 import '../../../../core/theme/cp_theme.dart';
 import '../../../../core/widgets/coupang_widgets.dart';
-import '../../data/repositories/demo_auth_repository.dart';
 import 'signup_page.dart';
 
-class CpLoginPage extends StatefulWidget {
+class CpLoginPage extends ConsumerStatefulWidget {
   const CpLoginPage({super.key});
 
   @override
-  State<CpLoginPage> createState() => _CpLoginPageState();
+  ConsumerState<CpLoginPage> createState() => _CpLoginPageState();
 }
 
-class _CpLoginPageState extends State<CpLoginPage> {
+class _CpLoginPageState extends ConsumerState<CpLoginPage> {
   final _emailController = TextEditingController(text: 'demo@coupang.dev');
   final _passwordController = TextEditingController(text: '123456');
   bool _loading = false;
@@ -23,7 +24,7 @@ class _CpLoginPageState extends State<CpLoginPage> {
       _error = null;
     });
     try {
-      await DemoAuthRepository.instance.login(
+      await ref.read(loginUseCaseProvider)(
         _emailController.text.trim(),
         _passwordController.text,
       );

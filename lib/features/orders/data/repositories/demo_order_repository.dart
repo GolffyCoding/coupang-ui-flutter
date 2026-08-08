@@ -2,9 +2,10 @@ import 'package:flutter/foundation.dart';
 import '../../../cart/domain/entities/cart_item.dart';
 import '../../../product/data/repositories/demo_product_repository.dart';
 import '../../domain/entities/order.dart';
+import '../../domain/repositories/order_repository.dart';
 
 /// In-memory demo order history repository, app-wide singleton.
-class DemoOrderRepository extends ChangeNotifier {
+class DemoOrderRepository extends ChangeNotifier implements OrderRepository {
   DemoOrderRepository._internal() {
     _seedDemoOrders();
   }
@@ -12,9 +13,11 @@ class DemoOrderRepository extends ChangeNotifier {
 
   final List<CpOrder> _orders = [];
 
+  @override
   List<CpOrder> getOrders() =>
       List.unmodifiable(_orders.reversed.toList());
 
+  @override
   CpOrder placeOrder({
     required List<CartItem> items,
     required int totalPrice,

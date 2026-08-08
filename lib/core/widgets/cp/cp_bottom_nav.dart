@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/cp_theme.dart';
+import 'cp_fly_to_cart.dart';
 
 class CpBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -36,60 +37,72 @@ class CpBottomNav extends StatelessWidget {
             children: List.generate(items.length, (i) {
               final selected = i == currentIndex;
               final showBadge = i == 2 && cartCount > 0;
-              return GestureDetector(
-                onTap: () => onTap?.call(i),
-                child: SizedBox(
-                  width: 60,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Icon(
-                            items[i].icon,
-                            color: selected
-                                ? CpColors.blue
-                                : CpColors.textMuted,
-                            size: 22,
-                          ),
-                          if (showBadge)
-                            Positioned(
-                              right: -6,
-                              top: -4,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: CpColors.red,
-                                  borderRadius: BorderRadius.circular(7),
-                                ),
-                                child: Text(
-                                  '$cartCount',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => onTap?.call(i),
+                  child: SizedBox(
+                    width: 60,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            AnimatedScale(
+                              scale: selected ? 1.08 : 1.0,
+                              duration: const Duration(milliseconds: 150),
+                              curve: Curves.easeOut,
+                              child: Icon(
+                                items[i].icon,
+                                color: selected
+                                    ? CpColors.blue
+                                    : CpColors.textMuted,
+                                size: 22,
+                              ),
+                            ),
+                            if (showBadge)
+                              Positioned(
+                                right: -6,
+                                top: -4,
+                                child: CpBadgePop(
+                                  trigger: cartCount,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: CpColors.red,
+                                      borderRadius: BorderRadius.circular(7),
+                                    ),
+                                    child: Text(
+                                      '$cartCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        items[i].label,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: selected
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          color: selected ? CpColors.blue : CpColors.textMuted,
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          items[i].label,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: selected ? CpColors.blue : CpColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

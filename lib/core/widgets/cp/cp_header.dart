@@ -4,6 +4,7 @@ import '../../../features/cart/data/repositories/demo_cart_repository.dart';
 import 'category_button.dart';
 import 'coupang_logo.dart';
 import 'cp_search_bar.dart';
+import 'cp_fly_to_cart.dart';
 
 class CpHeader extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onMenuTap;
@@ -13,6 +14,7 @@ class CpHeader extends StatelessWidget implements PreferredSizeWidget {
   final Function(String)? onSearch;
   final bool showBack;
   final String? title;
+  final GlobalKey? cartIconKey;
 
   const CpHeader({
     super.key,
@@ -23,6 +25,7 @@ class CpHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onSearch,
     this.showBack = false,
     this.title,
+    this.cartIconKey,
   });
 
   @override
@@ -88,6 +91,7 @@ class CpHeader extends StatelessWidget implements PreferredSizeWidget {
                     builder: (context, _) {
                       final count = DemoCartRepository.instance.totalItemCount;
                       return _HeaderIcon(
+                        key: cartIconKey,
                         icon: Icons.shopping_cart_outlined,
                         onTap: onCartTap,
                         badge: count > 0 ? '$count' : null,
@@ -104,7 +108,7 @@ class CpHeader extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(56);
+  Size get preferredSize => const Size.fromHeight(64);
 }
 
 class _HeaderIcon extends StatelessWidget {
@@ -112,44 +116,53 @@ class _HeaderIcon extends StatelessWidget {
   final VoidCallback? onTap;
   final String? badge;
 
-  const _HeaderIcon({required this.icon, this.onTap, this.badge});
+  const _HeaderIcon({super.key, required this.icon, this.onTap, this.badge});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Icon(icon, color: CpColors.textMain, size: 24),
-            if (badge != null)
-              Positioned(
-                right: -6,
-                top: -4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: CpColors.blue,
-                    borderRadius: BorderRadius.circular(7),
-                    border: Border.all(color: CpColors.white, width: 1.5),
-                  ),
-                  child: Text(
-                    badge!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(icon, color: CpColors.textMain, size: 24),
+              if (badge != null)
+                Positioned(
+                  right: -6,
+                  top: -4,
+                  child: CpBadgePop(
+                    trigger: badge,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: CpColors.blue,
+                        borderRadius: BorderRadius.circular(7),
+                        border: Border.all(color: CpColors.white, width: 1.5),
+                      ),
+                      child: Text(
+                        badge!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          height: 1.2,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -43,9 +43,26 @@ class _CpQuantitySelectorState extends State<CpQuantitySelector> {
           Container(
             width: 40,
             alignment: Alignment.center,
-            child: Text(
-              '$_qty',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.4),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              ),
+              child: Text(
+                '$_qty',
+                key: ValueKey(_qty),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
           _QtyBtn(
@@ -70,16 +87,18 @@ class _QtyBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        color: onTap == null ? CpColors.bgGray : CpColors.white,
-        child: Icon(
-          icon,
-          size: 16,
-          color: onTap == null ? CpColors.textMuted : CpColors.textBody,
+    return Material(
+      color: onTap == null ? CpColors.bgGray : CpColors.white,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: Icon(
+            icon,
+            size: 16,
+            color: onTap == null ? CpColors.textMuted : CpColors.textBody,
+          ),
         ),
       ),
     );

@@ -16,36 +16,44 @@ class CpChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        margin: const EdgeInsets.only(right: 8),
-        decoration: BoxDecoration(
-          color: isActive ? CpColors.blue : CpColors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: isActive ? CpColors.blue : CpColors.border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 13,
-                color: isActive ? Colors.white : CpColors.textSub,
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: isActive ? Colors.white : CpColors.textBody,
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Material(
+        color: isActive ? CpColors.blue : CpColors.white,
+        borderRadius: BorderRadius.circular(18),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isActive ? CpColors.blue : CpColors.border,
               ),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: 13,
+                    color: isActive ? Colors.white : CpColors.textSub,
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: isActive ? Colors.white : CpColors.textBody,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

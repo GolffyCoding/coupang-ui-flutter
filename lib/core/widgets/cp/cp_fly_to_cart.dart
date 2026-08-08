@@ -49,7 +49,6 @@ void flyToCart({
           final arc = -60 * (t < 0.5 ? t * 2 : (1 - t) * 2);
           final dy = startOffset.dy + (endOffset.dy - startOffset.dy) * t + arc;
           final scale = 1.0 - 0.55 * t;
-          final opacity = (1.0 - t).clamp(0.0, 1.0) * 0.6 + 0.4 * (1 - t);
           return Positioned(
             left: dx,
             top: dy,

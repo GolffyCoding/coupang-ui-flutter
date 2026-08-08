@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/cp_theme.dart';
 import '../core/widgets/coupang_widgets.dart';
+import '../core/providers/repository_providers.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/search/presentation/pages/search_page.dart';
 import '../features/cart/presentation/pages/cart_page.dart';
-import '../features/cart/data/repositories/demo_cart_repository.dart';
 import '../features/wishlist/presentation/pages/wishlist_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
 
 /// App-level shell that hosts the bottom navigation bar and switches
 /// between the five top-level destinations: Home / Search / Cart /
 /// Wishlist / My Coupang.
-class CpRootShell extends StatefulWidget {
+class CpRootShell extends ConsumerStatefulWidget {
   const CpRootShell({super.key});
 
   @override
-  State<CpRootShell> createState() => _CpRootShellState();
+  ConsumerState<CpRootShell> createState() => _CpRootShellState();
 }
 
-class _CpRootShellState extends State<CpRootShell> {
+class _CpRootShellState extends ConsumerState<CpRootShell> {
   int _index = 0;
 
   void _goTo(int i) => setState(() => _index = i);
 
   @override
   Widget build(BuildContext context) {
+    final cartRepo = ref.watch(cartChangeNotifierProvider);
     final pages = [
       CpHomePage(
         embedded: true,
@@ -45,15 +47,10 @@ class _CpRootShellState extends State<CpRootShell> {
         duration: const Duration(milliseconds: 180),
         child: KeyedSubtree(key: ValueKey(_index), child: pages[_index]),
       ),
-      bottomNavigationBar: ListenableBuilder(
-        listenable: DemoCartRepository.instance,
-        builder: (context, _) {
-          return CpBottomNav(
-            currentIndex: _index,
-            cartCount: DemoCartRepository.instance.totalItemCount,
-            onTap: _goTo,
-          );
-        },
+      bottomNavigationBar: CpBottomNav(
+        currentIndex: _index,
+        cartCount: cartRepo.totalItemCount,
+        onTap: _goTo,
       ),
     );
   }

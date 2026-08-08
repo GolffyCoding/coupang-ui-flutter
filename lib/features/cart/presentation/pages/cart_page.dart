@@ -1,22 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/cp_theme.dart';
 import '../../../../core/widgets/coupang_widgets.dart';
-import '../../data/repositories/demo_cart_repository.dart';
+import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/providers/usecase_providers.dart';
 import '../widgets/cart_widgets.dart';
 import 'checkout_page.dart';
 import '../../../wishlist/presentation/pages/wishlist_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../search/presentation/pages/category_page.dart';
 
-class CpCartPage extends StatefulWidget {
+class CpCartPage extends ConsumerStatefulWidget {
   const CpCartPage({super.key});
 
   @override
-  State<CpCartPage> createState() => _CpCartPageState();
+  ConsumerState<CpCartPage> createState() => _CpCartPageState();
 }
 
-class _CpCartPageState extends State<CpCartPage> {
-  final _repo = DemoCartRepository.instance;
+class _CpCartPageState extends ConsumerState<CpCartPage> {
+  final Set<String> _removingIds = {};
+
+  void _animateRemove(String productId) {
+    if (_removingIds.contains(productId)) return;
+    setState(() => _removingIds.add(productId));
+    Future.delayed(const Duration(milliseconds: 220), () {
+      if (!mounted) return;
+      ref.read(removeFromCartUseCaseProvider)(productId);
+      setState(() => _removingIds.remove(productId));
+    });
+  }
 
   String _fmt(int v) => v.toString().replaceAllMapped(
     RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -42,10 +54,10 @@ class _CpCartPageState extends State<CpCartPage> {
           MaterialPageRoute(builder: (_) => CpCategoryPage(categoryName: name)),
         ),
       ),
-      body: ListenableBuilder(
-        listenable: _repo,
-        builder: (context, _) {
-          final items = _repo.getItems();
+      body: Builder(
+        builder: (context) {
+          final repo = ref.watch(cartChangeNotifierProvider);
+          final items = repo.getItems();
           if (items.isEmpty) {
             return CpEmptyState(
               icon: Icons.shopping_cart_outlined,
@@ -74,7 +86,7 @@ class _CpCartPageState extends State<CpCartPage> {
                     Checkbox(
                       value: allSelected,
                       activeColor: CpColors.blue,
-                      onChanged: (v) => _repo.setAllSelected(v ?? false),
+                      onChanged: (v) => repo.setAllSelected(v ?? false),
                     ),
                     const Text(
                       '전체선택',
@@ -82,7 +94,7 @@ class _CpCartPageState extends State<CpCartPage> {
                     ),
                     const Spacer(),
                     GestureDetector(
-                      onTap: _repo.clearSelected,
+                      onTap: repo.clearSelected,
                       child: const Text(
                         '선택삭제',
                         style: TextStyle(
@@ -103,13 +115,28 @@ class _CpCartPageState extends State<CpCartPage> {
                       const Divider(height: 8, color: CpColors.bg),
                   itemBuilder: (context, i) {
                     final item = items[i];
-                    return CpCartItemTile(
-                      item: item,
-                      onSelectChanged: (v) =>
-                          _repo.setSelected(item.product.id, v ?? false),
-                      onQuantityChanged: (q) =>
-                          _repo.updateQuantity(item.product.id, q),
-                      onRemove: () => _repo.removeItem(item.product.id),
+                    final removing = _removingIds.contains(item.product.id);
+                    return AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: removing ? 0 : 1,
+                      child: AnimatedSlide(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOut,
+                        offset: removing ? const Offset(0.3, 0) : Offset.zero,
+                        child: IgnorePointer(
+                          ignoring: removing,
+                          child: CpCartItemTile(
+                            item: item,
+                            onSelectChanged: (v) => repo.setSelected(
+                              item.product.id,
+                              v ?? false,
+                            ),
+                            onQuantityChanged: (q) =>
+                                repo.updateQuantity(item.product.id, q),
+                            onRemove: () => _animateRemove(item.product.id),
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),
