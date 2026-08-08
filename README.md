@@ -49,20 +49,54 @@ layering:
 feature/
   domain/
     entities/        # plain data classes
-    repositories/     # abstract interfaces
-    usecases/          # one class per use case
+    repositories/     # abstract interfaces — the only thing usecases depend on
+    usecases/          # one callable class per use case
   data/
     models/            # (de)serializable data-layer models
     repositories/       # in-memory "Demo" implementations — no real backend
   presentation/
-    controllers/         # state holders for pages
-    pages/                 # screens
+    controllers/         # ChangeNotifier / Riverpod Notifier state holders
+    pages/                 # screens (ConsumerWidget / ConsumerStatefulWidget)
     widgets/                 # feature-specific UI pieces
 ```
 
-All repositories are in-memory (`Demo*Repository`) so the app runs fully
-offline with no backend — cart, wishlist, auth, and orders all persist only
-for the current session via `ChangeNotifier` singletons.
+`auth`, `cart`, `home`, `orders`, `product`, and `wishlist` all have a
+`domain/repositories/` interface with a matching `Demo*Repository`
+implementation in `data/repositories/` — presentation code depends on the
+interface (via a usecase), never on the concrete `Demo*` class directly.
+`search` reuses `product`'s `ProductRepository` interface rather than
+duplicating one.
+
+All repositories are in-memory (`Demo*Repository`, each a `ChangeNotifier`)
+so the app runs fully offline with no backend — cart, wishlist, auth, and
+orders all persist only for the current session.
+
+### Dependency injection & state — Riverpod
+
+Wiring is centralized in `lib/core/providers/`:
+
+- `repository_providers.dart` — exposes each `Demo*Repository` singleton as
+  a `Provider`/`ChangeNotifierProvider`. This is the single seam where a
+  concrete implementation is chosen; swapping `DemoCartRepository` for a
+  real API-backed one later only touches this file.
+- `usecase_providers.dart` — exposes every usecase as a `Provider` that
+  reads its repository from the providers above.
+
+Pages are `ConsumerWidget`/`ConsumerStatefulWidget` and pull what they need
+with `ref.read(xUseCaseProvider)` (actions) or `ref.watch(xRepositoryProvider)`
+(reactive lists — cart items, wishlist, orders re-render automatically on
+change, replacing manual `ListenableBuilder` wiring). Search and category
+sort state, which used to be raw `setState` fields, now live in
+`search_notifier.dart` / `category_sort_notifier.dart` as `Notifier`s so
+that state is inspectable/testable the same way as everything else.
+`main.dart` wraps the app in a single `ProviderScope`.
+
+### Tests
+
+`test/widget_test.dart` covers the app's root smoke test. Coverage of the
+usecases/repositories is still thin — the interfaces exist specifically so
+unit tests can fake a repository and exercise a usecase in isolation; adding
+that per-usecase suite is a natural next step, not yet done exhaustively.
 
 ## Reusable widget library
 
